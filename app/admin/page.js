@@ -462,11 +462,11 @@ export default function AdminPage() {
       
       {/* NAVBAR */}
       <nav className="bg-white border-b border-[#4A3B32]/10 p-4 shrink-0 flex justify-between items-center z-40 shadow-sm">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 shrink-0">
           <img src="/logo.png" alt="Gustó Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
-          <img src="/logo.png" alt="GA" className="h-12 w-auto sm:hidden object-contain drop-shadow-sm" />
+          <img src="/logo.png" alt="GA" className="h-8 w-auto sm:hidden object-contain drop-shadow-sm" />
         </div>
-        <div className="flex items-center gap-2 max-w-[calc(100vw-100px)] overflow-x-auto hide-scrollbar sm:gap-4 flex-1 justify-end py-1">
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar sm:gap-4 flex-1 justify-end py-1">
           <audio id="order-alert-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d1da9ac74.mp3?filename=cash-register-kaching-93513.mp3" preload="auto"></audio>
           
           <button onClick={() => {
