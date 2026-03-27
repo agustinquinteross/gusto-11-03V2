@@ -82,7 +82,7 @@ export default function PedidoTrackingPage() {
       {/* HEADER PREMIUM (Logo limpio sin fondo) */}
       <div className="pt-8 pb-6 pointer-events-none flex flex-col items-center justify-center">
          <div className="w-28 h-28 flex items-center justify-center mb-4 z-10 hover:scale-105 transition-transform">
-             <img src="/logo.svg" alt="Gusto" className="w-full h-full object-contain drop-shadow-lg" />
+             <img src="/logo.png" alt="Gusto" className="w-full h-full object-contain drop-shadow-lg" />
          </div>
          <div className="flex flex-col items-center">
              <span className="text-[#4A3B32]/60 text-[10px] font-black tracking-[0.3em] uppercase mb-1">Tu Pedido</span>

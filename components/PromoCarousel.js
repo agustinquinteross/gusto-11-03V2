@@ -111,7 +111,7 @@ export default function PromoCarousel() {
 
   return (
     <div className="relative group w-full max-w-6xl mx-auto px-4 mt-6">
-      <div className="relative w-full aspect-video md:aspect-[21/9] lg:aspect-[3/1] overflow-hidden rounded-2xl shadow-2xl border border-[#4A3B32]/10">
+      <div className="relative w-full aspect-[4/3] sm:aspect-video md:aspect-[21/9] lg:aspect-[3/1] overflow-hidden rounded-2xl shadow-2xl border border-[#4A3B32]/10">
 
         {/* Imágenes */}
         <div

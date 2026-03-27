@@ -60,7 +60,7 @@ export default function Home() {
             product_modifiers (
                 group_id,
                 modifier_groups (
-                    id, name, min_selection, max_selection,
+                    id, name, min_selection, max_selection, max_per_option,
                     modifier_options (id, name, price, is_available)
                 )
             )
@@ -175,7 +175,7 @@ export default function Home() {
         <div className="relative z-10 flex flex-col items-center">
           {/* Logo animado lentamente */}
           <div className="mb-8 hover:scale-105 transition-transform duration-700">
-             <img src="/logo.svg" alt="Gusto" className="w-56 sm:w-64 object-contain drop-shadow-xl opacity-90" />
+             <img src="/logo.png" alt="Gusto" className="w-56 sm:w-64 object-contain drop-shadow-xl opacity-90" />
           </div>
           
           <h1 className="text-4xl sm:text-5xl font-black italic tracking-tighter mb-4 text-[#4A3B32]">CERRADO</h1>
@@ -205,30 +205,30 @@ export default function Home() {
             50% { transform: translateY(-6px); }
           }
         `}} />
-        <img src="/logo.svg" alt="Gusto" className="w-full max-w-[260px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
+        <img src="/logo.png" alt="Gusto" className="w-full max-w-[180px] sm:max-w-[260px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
       </div>
 
       {/* BARRA DE NAVEGACIÓN STICKY */}
       <div className="sticky top-0 z-30 bg-[#FAF7F2]/90 backdrop-blur-md border-b border-[#4A3B32]/10 shadow-sm">
-        <div className="max-w-6xl mx-auto p-4 space-y-4">
+        <div className="max-w-6xl mx-auto p-3 sm:p-4 space-y-3 sm:space-y-4">
 
           {/* Buscador */}
           <div className="relative z-20 shadow-[0_8px_30px_rgb(74,59,50,0.12)] rounded-xl">
             <Search className="absolute left-4 top-3.5 text-[#4A3B32]/70" size={22} />
             <input
               type="text" placeholder="¿Qué se te antoja hoy?"
-              className="w-full bg-white border-0 rounded-xl py-3.5 pl-12 pr-4 text-[#4A3B32] font-bold placeholder-[#4A3B32]/40 outline-none transition-all ring-1 ring-[#4A3B32]/10 focus:ring-2 focus:ring-[#D4A373]"
+              className="w-full bg-white border-0 rounded-xl py-3 sm:py-3.5 pl-11 sm:pl-12 pr-4 text-[#4A3B32] text-sm sm:text-base font-bold placeholder-[#4A3B32]/40 outline-none transition-all ring-1 ring-[#4A3B32]/10 focus:ring-2 focus:ring-[#D4A373]"
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           {/* Categorías */}
-          <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar hide-scrollbar">
+          <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-2 custom-scrollbar hide-scrollbar">
             {categories.map(cat => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.name)}
-                className={`whitespace-nowrap px-5 py-2 rounded-full font-bold text-sm transition-all border ${activeCategory === cat.name ? 'bg-[#4A3B32] text-[#FAF7F2] border-[#4A3B32] shadow-lg' : 'bg-transparent text-[#4A3B32]/70 border-[#4A3B32]/20 hover:border-[#4A3B32]/50 hover:text-[#4A3B32]'}`}
+                  className={`whitespace-nowrap px-4 sm:px-5 py-2 rounded-full font-bold text-xs sm:text-sm transition-all border ${activeCategory === cat.name ? 'bg-[#4A3B32] text-[#FAF7F2] border-[#4A3B32] shadow-lg' : 'bg-transparent text-[#4A3B32]/70 border-[#4A3B32]/20 hover:border-[#4A3B32]/50 hover:text-[#4A3B32]'}`}
               >
                 {cat.name}
               </button>
@@ -241,12 +241,12 @@ export default function Home() {
       <PromoCarousel />
 
       {/* GRILLA DE PRODUCTOS */}
-      <main className="max-w-6xl mx-auto p-4 sm:p-6">
+      <main className="max-w-6xl mx-auto p-3 sm:p-6">
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#4A3B32]" size={40} /></div>
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
               {filteredProducts.map(product => (
                 <div key={product.id} onClick={() => product.stock !== 0 && setSelectedProduct(product)} className={`bg-white border border-[#4A3B32]/10 rounded-2xl overflow-hidden transition-all group relative ${product.stock === 0 ? 'opacity-75 cursor-not-allowed grayscale-[0.2]' : 'hover:border-[#4A3B32]/30 cursor-pointer shadow-sm hover:shadow-md'}`}>
 
@@ -288,7 +288,7 @@ export default function Home() {
                     })}
                   </div>
 
-                  <div className="h-48 overflow-hidden relative">
+                  <div className="aspect-[4/3] overflow-hidden relative">
                     {product.image_url ? (
                       <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     ) : (
@@ -296,10 +296,10 @@ export default function Home() {
                     )}
                     <div className="absolute bottom-2 right-2 bg-[#4A3B32]/90 backdrop-blur text-[#FAF7F2] px-3 py-1 rounded-lg font-bold border border-[#4A3B32]">${product.price}</div>
                   </div>
-                  <div className="p-4">
-                    <h3 className="text-2xl font-serif text-[#4A3B32] mb-1 leading-tight">{product.name}</h3>
-                    <p className="text-sm text-[#4A3B32]/70 line-clamp-2">{product.description}</p>
-                    <button className="mt-4 w-full bg-transparent border border-[#4A3B32] hover:bg-[#4A3B32] text-[#4A3B32] hover:text-[#FAF7F2] font-bold uppercase tracking-widest text-xs py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">Ver Detalles</button>
+                  <div className="p-3 sm:p-4">
+                    <h3 className="text-base sm:text-2xl font-serif text-[#4A3B32] mb-1 leading-tight line-clamp-1">{product.name}</h3>
+                    <p className="text-xs sm:text-sm text-[#4A3B32]/70 line-clamp-2 hidden sm:block">{product.description}</p>
+                    <button className="mt-2 sm:mt-4 w-full bg-transparent border border-[#4A3B32] hover:bg-[#4A3B32] text-[#4A3B32] hover:text-[#FAF7F2] font-bold uppercase tracking-widest text-[10px] sm:text-xs py-2 sm:py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">Ver Detalles</button>
                   </div>
                 </div>
               ))}
@@ -310,40 +310,37 @@ export default function Home() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-[#4A3B32] text-[#FAF7F2] border-t border-[#4A3B32] mt-12 py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
-          <div className="text-center md:text-left">
-            <img src="/logo.svg" alt="Gusto" className="h-20 w-auto invert opacity-90 mx-auto md:mx-0 object-contain" />
-            <p className="text-[#FAF7F2]/80 font-medium text-sm mt-4">El verdadero sabor,<br />directo a donde estés.</p>
+      <footer className="bg-[#4A3B32] text-[#FAF7F2] mt-12 px-6 pb-20">
+        <div className="max-w-6xl mx-auto flex flex-col items-center text-center py-10 gap-5">
+          <img src="/logo.png" alt="Gusto" className="h-16 w-auto object-contain" style={{ filter: 'brightness(0) invert(0.93) sepia(0.15)' }} />
+          
+          <div className="space-y-1">
+            <p className="text-[#FAF7F2]/90 font-bold text-sm">San Fernando del Valle de Catamarca</p>
+            <p className="text-[#FAF7F2]/50 text-xs">Pedidos: 12:00 a 16:00 hs</p>
+            <p className="text-[#FAF7F2]/50 text-xs">Entregas/retiros: 15:00 a 17:30 hs</p>
           </div>
 
-          <div className="flex flex-col items-center md:items-end gap-4">
-            <div className="text-center md:text-right space-y-1">
-              <p className="text-[#FAF7F2]/90 font-bold text-sm">Calle San Martín 123, Catamarca</p>
-              <p className="text-[#FAF7F2]/60 text-xs uppercase tracking-widest">Lunes a Lunes • 15:00 a 20:30</p>
-            </div>
-            <div className="flex gap-4">
-              <a href="https://www.instagram.com/gusto.ok/" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/10 rounded-full text-[#FAF7F2] hover:bg-[#FAF7F2] hover:text-[#4A3B32] transition" title="Instagram">
-                <Instagram size={20} />
-              </a>
-              <a href="https://wa.me/qr/YIQG3BJC7FFUC1" target="_blank" rel="noopener noreferrer" className="p-3 bg-white/10 rounded-full text-[#FAF7F2] hover:bg-[#FAF7F2] hover:text-[#4A3B32] transition" title="WhatsApp">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
-                </svg>
-              </a>
-            </div>
+          <div className="flex items-center gap-3">
+            <a href="https://www.instagram.com/gusto.ok/" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/10 rounded-full text-[#FAF7F2] hover:bg-[#FAF7F2] hover:text-[#4A3B32] transition" title="Instagram">
+              <Instagram size={18} />
+            </a>
+            <a href="https://wa.me/543834975040" target="_blank" rel="noopener noreferrer" className="p-2.5 bg-white/10 rounded-full text-[#FAF7F2] hover:bg-[#FAF7F2] hover:text-[#4A3B32] transition" title="WhatsApp">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.888-.788-1.489-1.761-1.663-2.06-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/>
+              </svg>
+            </a>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto text-center text-[#FAF7F2]/40 text-xs mt-10 pt-6 border-t border-[#FAF7F2]/10 flex flex-col md:flex-row justify-between items-center gap-2">
-          <span>© 2026 Gusto. Todos los derechos reservados.</span>
-          <span>Creado por webdesigner.com</span>
+
+        <div className="max-w-6xl mx-auto text-center text-[#FAF7F2]/25 text-[11px] pt-5 border-t border-[#FAF7F2]/10">
+          <p>&copy; 2026 Gusto &middot; <a href="https://pulso.app" target="_blank" rel="noopener noreferrer" className="hover:text-[#FAF7F2]/50 transition">Creado con ♥ por <span className="font-bold">pulso.app</span></a></p>
         </div>
       </footer>
 
       {/* BOTONES FLOTANTES */}
       <Link href="/admin" className="fixed bottom-6 left-6 z-40 bg-[#FAF7F2]/80 backdrop-blur-md border border-[#4A3B32]/20 p-3 rounded-full text-[#4A3B32]/70 hover:bg-[#4A3B32] hover:text-[#FAF7F2] hover:border-[#4A3B32] transition-all shadow-2xl group"><Lock size={20} className="group-hover:scale-110 transition-transform" /></Link>
 
-      <button onClick={() => setIsCartOpen(true)} className="fixed bottom-6 right-6 z-40 bg-[#4A3B32] text-[#FAF7F2] p-4 rounded-full shadow-xl hover:bg-[#FAF7F2] hover:scale-105 transition-all flex items-center justify-center group">
+      <button onClick={() => setIsCartOpen(true)} className="fixed bottom-6 right-6 z-40 bg-[#4A3B32] text-[#FAF7F2] p-4 rounded-full shadow-xl hover:bg-black hover:scale-105 transition-all flex items-center justify-center group">
         <ShoppingCart size={24} className="group-hover:rotate-12 transition-transform" />
         {/* Renderiza el contador solo si se montó en el cliente */}
         {mounted && totalItems > 0 && <span className="absolute -top-2 -right-2 bg-yellow-400 text-black font-black text-xs w-6 h-6 flex items-center justify-center rounded-full border-2 border-black animate-in zoom-in">{totalItems}</span>}

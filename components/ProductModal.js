@@ -1,23 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
-import { X, Check, PenLine } from 'lucide-react';
+import { X, Check, PenLine, Minus, Plus } from 'lucide-react';
 
 // ✅ FIX: Helper para formatear precios sin decimales sucios.
-// El problema: sumar floats en JS da resultados como 1250.0000000002
-// porque los números de punto flotante no son exactos en binario.
-// Ejemplo: 1200 + 50.10 = 1250.1000000000001
-//
-// Solución: redondeamos a 2 decimales y luego usamos toLocaleString
-// para mostrar el separador de miles con formato argentino.
 function formatPrice(amount) {
-  // Math.round(n * 100) / 100 es más preciso que toFixed() para aritmética
   const rounded = Math.round(amount * 100) / 100
-  // Si el resultado es entero, no mostramos decimales (ej: $1.250 en vez de $1.250,00)
   return rounded % 1 === 0
     ? rounded.toLocaleString('es-AR')
     : rounded.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 export default function ProductModal({ product, isOpen, onClose, onAddToCart }) {
+  // selectedOptions ahora guarda cantidades: { [optionId]: número }
   const [selectedOptions, setSelectedOptions] = useState({});
   const [qty, setQty] = useState(1);
   const [note, setNote] = useState('');
@@ -25,7 +18,6 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
   // 1. Reiniciar estado al abrir
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOptions({});
       setQty(1);
       setNote('');
@@ -34,6 +26,14 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
 
   const groups = product?.modifiers || [];
 
+  // Helper: contar total seleccionado en un grupo
+  const getGroupTotal = (group) => {
+    return (group.modifier_options || []).reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
+  };
+
+  // ¿Es un grupo tipo "Box" (con cantidades)?
+  const isQuantityGroup = (group) => (group.max_per_option || 1) > 1;
+
   // 2. Calcular precio unitario
   const unitPrice = useMemo(() => {
     if (!product) return 0;
@@ -41,13 +41,12 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
     groups.forEach(group => {
       const options = group.modifier_options || [];
       options.forEach(opt => {
-        if (selectedOptions[opt.id]) {
-          extraCost += Number(opt.price);
+        const count = selectedOptions[opt.id] || 0;
+        if (count > 0) {
+          extraCost += Number(opt.price) * count;
         }
       });
     });
-    // ✅ FIX: Redondeamos el unitPrice ya en el useMemo para que el valor
-    // guardado en el carrito también sea limpio, no solo el display.
     return Math.round((Number(product.price) + extraCost) * 100) / 100;
   }, [product, selectedOptions, groups]);
 
@@ -59,49 +58,86 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
       // Radio (selección única)
       const newSelection = { ...selectedOptions };
       group.modifier_options.forEach(o => delete newSelection[o.id]);
-      newSelection[option.id] = true;
+      newSelection[option.id] = 1;
       setSelectedOptions(newSelection);
+    } else if (isQuantityGroup(group)) {
+      // Handled by handleQuantityChange
+      return;
     } else {
-      // Checkbox (selección múltiple)
+      // Checkbox (selección múltiple, toggle 0/1)
       setSelectedOptions(prev => {
-        const isSelected = !!prev[option.id];
-        const currentCount = group.modifier_options.filter(o => prev[o.id]).length;
+        const current = prev[option.id] || 0;
+        const groupTotal = getGroupTotal(group);
 
-        if (isSelected) {
+        if (current > 0) {
           const newState = { ...prev };
           delete newState[option.id];
           return newState;
         } else {
-          if (group.max_selection && currentCount >= group.max_selection) {
+          if (group.max_selection && groupTotal >= group.max_selection) {
             return prev; // Límite alcanzado
           }
-          return { ...prev, [option.id]: true };
+          return { ...prev, [option.id]: 1 };
         }
       });
     }
+  };
+
+  // Handler para +/- en grupos tipo Box
+  const handleQuantityChange = (group, option, delta) => {
+    setSelectedOptions(prev => {
+      const currentOptQty = prev[option.id] || 0;
+      const newOptQty = currentOptQty + delta;
+      const maxPerOpt = group.max_per_option || 1;
+
+      // No bajar de 0
+      if (newOptQty < 0) return prev;
+      // No superar máx por opción
+      if (newOptQty > maxPerOpt) return prev;
+
+      // Calcular total del grupo sin esta opción
+      const groupTotalWithout = (group.modifier_options || []).reduce(
+        (sum, opt) => sum + (opt.id === option.id ? 0 : (prev[opt.id] || 0)), 0
+      );
+
+      // No superar máx total del grupo
+      if (group.max_selection && (groupTotalWithout + newOptQty) > group.max_selection) return prev;
+
+      const newState = { ...prev };
+      if (newOptQty === 0) {
+        delete newState[option.id];
+      } else {
+        newState[option.id] = newOptQty;
+      }
+      return newState;
+    });
   };
 
   const handleAddToOrder = () => {
     // Validar obligatorios
     const missingRequired = groups.filter(g => {
       if (g.min_selection > 0) {
-        const count = g.modifier_options.filter(o => selectedOptions[o.id]).length;
-        return count < g.min_selection;
+        const total = getGroupTotal(g);
+        return total < g.min_selection;
       }
       return false;
     });
 
     if (missingRequired.length > 0) {
-      alert(`⚠️ Por favor selecciona opciones en: ${missingRequired[0].name}`);
+      const g = missingRequired[0];
+      const total = getGroupTotal(g);
+      alert(`⚠️ Faltan ${g.min_selection - total} selecciones en: ${g.name}`);
       return;
     }
 
-    // Preparar lista de opciones elegidas
+    // Preparar lista de opciones elegidas (con cantidad)
     const optionsList = [];
     groups.forEach(g => {
       g.modifier_options.forEach(o => {
-        if (selectedOptions[o.id]) {
-          optionsList.push({ name: o.name, price: o.price });
+        const count = selectedOptions[o.id] || 0;
+        if (count > 0) {
+          // Para el resumen del carrito, repetimos o indicamos cantidad
+          optionsList.push({ name: count > 1 ? `${o.name} x${count}` : o.name, price: o.price * count });
         }
       });
     });
@@ -109,17 +145,13 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
     onAddToCart({
       ...product,
       selectedOptions: optionsList,
-      price: unitPrice, // Ya viene redondeado del useMemo
+      price: unitPrice,
       quantity: qty,
       note: note
     });
     onClose();
   };
 
-  // ✅ FIX: Calculamos el total para mostrar en el botón usando el helper,
-  // evitando que aparezca "$1250.0000000002" cuando hay extras con decimales.
-  // Antes: ${unitPrice * qty}  →  podía dar "1250.1000000000001"
-  // Ahora: formatPrice(unitPrice * qty)  →  siempre da "1.250,10" o "1.250"
   const totalDisplay = formatPrice(unitPrice * qty)
 
   // 4. Renderizado
@@ -163,49 +195,119 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
 
           <hr className="border-[#4A3B32]/10" />
 
-          {/* Extras */}
+          {/* Extras / Modificadores */}
           {groups.length > 0 ? (
-            groups.map(group => (
-              <div key={group.id} className="space-y-3">
-                <div className="flex justify-between items-end">
-                  <h3 className="font-bold text-[#4A3B32] uppercase text-sm tracking-wide">{group.name}</h3>
-                  <div className="flex gap-2">
-                    {group.min_selection > 0 && (
-                      <span className="text-[10px] bg-red-900/40 text-red-400 px-2 py-0.5 rounded border border-red-900/50 font-bold uppercase">Obligatorio</span>
-                    )}
-                    {group.max_selection > 1 && (
-                      <span className="text-[10px] text-[#4A3B32]/60 font-bold bg-[#4A3B32]/5 px-2 py-0.5 rounded border border-[#4A3B32]/20">Max: {group.max_selection}</span>
-                    )}
+            groups.map(group => {
+              const groupTotal = getGroupTotal(group);
+              const isBox = isQuantityGroup(group);
+              
+              return (
+                <div key={group.id} className="space-y-3">
+                  <div className="flex justify-between items-end">
+                    <h3 className="font-bold text-[#4A3B32] uppercase text-sm tracking-wide">{group.name}</h3>
+                    <div className="flex gap-2 items-center">
+                      {group.min_selection > 0 && (
+                        <span className="text-[10px] bg-red-900/40 text-red-400 px-2 py-0.5 rounded border border-red-900/50 font-bold uppercase">Obligatorio</span>
+                      )}
+                      {isBox && (
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded border transition-colors ${groupTotal === group.max_selection ? 'bg-green-600/20 text-green-600 border-green-600/30' : 'bg-[#4A3B32]/5 text-[#4A3B32]/60 border-[#4A3B32]/20'}`}>
+                          {groupTotal}/{group.max_selection}
+                        </span>
+                      )}
+                      {!isBox && group.max_selection > 1 && (
+                        <span className="text-[10px] text-[#4A3B32]/60 font-bold bg-[#4A3B32]/5 px-2 py-0.5 rounded border border-[#4A3B32]/20">Max: {group.max_selection}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Barra de progreso para grupos tipo Box */}
+                  {isBox && group.max_selection > 1 && (
+                    <div className="h-1.5 bg-[#4A3B32]/10 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-300 ${groupTotal === group.max_selection ? 'bg-green-500' : 'bg-[#D4A373]'}`}
+                        style={{ width: `${(groupTotal / group.max_selection) * 100}%` }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {group.modifier_options?.map(option => {
+                      const optQty = selectedOptions[option.id] || 0;
+                      const isSelected = optQty > 0;
+                      const maxPerOpt = group.max_per_option || 1;
+                      const canAdd = groupTotal < (group.max_selection || 999) && optQty < maxPerOpt && option.is_available;
+
+                      if (isBox) {
+                        // --- MODO BOX: +/- por opción ---
+                        return (
+                          <div
+                            key={option.id}
+                            className={`flex justify-between items-center p-3 rounded-xl border transition-all
+                              ${!option.is_available ? 'opacity-50 grayscale cursor-not-allowed bg-[#4A3B32]/5' : ''}
+                              ${isSelected ? 'border-[#D4A373] bg-[#D4A373]/10' : 'border-[#4A3B32]/10 bg-[#FAF7F2]/40'}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`font-medium text-sm ${isSelected ? 'text-[#4A3B32] font-bold' : 'text-[#4A3B32]/80'}`}>
+                                {option.name}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {Number(option.price) > 0 && (
+                                <span className="text-xs font-bold text-[#4A3B32]/50 mr-2">+${formatPrice(Number(option.price))}</span>
+                              )}
+                              {option.is_available && (
+                                <div className="flex items-center bg-white border border-[#4A3B32]/20 rounded-lg overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuantityChange(group, option, -1)}
+                                    disabled={optQty === 0}
+                                    className="w-8 h-8 flex items-center justify-center text-[#4A3B32]/70 hover:bg-[#4A3B32]/5 transition disabled:opacity-30"
+                                  >
+                                    <Minus size={14} />
+                                  </button>
+                                  <span className={`w-6 text-center text-sm font-black ${optQty > 0 ? 'text-[#4A3B32]' : 'text-[#4A3B32]/30'}`}>
+                                    {optQty}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleQuantityChange(group, option, 1)}
+                                    disabled={!canAdd}
+                                    className="w-8 h-8 flex items-center justify-center text-[#4A3B32]/70 hover:bg-[#4A3B32]/5 transition disabled:opacity-30"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // --- MODO CLÁSICO: Toggle (checkbox/radio) ---
+                      return (
+                        <div
+                          key={option.id}
+                          onClick={() => option.is_available && handleToggleOption(group, option)}
+                          className={`flex justify-between items-center p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.98] 
+                            ${!option.is_available ? 'opacity-50 grayscale cursor-not-allowed bg-[#4A3B32]/5' : ''}
+                            ${isSelected ? 'border-red-600 bg-red-900/10 shadow-[0_0_15px_rgba(220,38,38,0.1)]' : 'border-[#4A3B32]/10 bg-[#FAF7F2]/40 hover:border-[#4A3B32]/30'}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-red-500 bg-[#4A3B32] text-[#FAF7F2]' : 'border-[#4A3B32]/30 bg-transparent'}`}>
+                              {isSelected && <Check size={12} strokeWidth={4} />}
+                            </div>
+                            <span className={`font-medium text-sm ${isSelected ? 'text-[#4A3B32]' : 'text-[#4A3B32]/80'}`}>{option.name}</span>
+                          </div>
+                          <span className={`text-sm font-bold ${isSelected ? 'text-[#4A3B32]' : 'text-[#4A3B32]/60'}`}>
+                            {Number(option.price) > 0 ? `+$${formatPrice(Number(option.price))}` : 'Gratis'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-
-                <div className="space-y-2">
-                  {group.modifier_options?.map(option => {
-                    const isSelected = !!selectedOptions[option.id];
-                    return (
-                      <div
-                        key={option.id}
-                        onClick={() => option.is_available && handleToggleOption(group, option)}
-                        className={`flex justify-between items-center p-3 rounded-xl border cursor-pointer transition-all active:scale-[0.98] 
-                          ${!option.is_available ? 'opacity-50 grayscale cursor-not-allowed bg-[#4A3B32]/5' : ''}
-                          ${isSelected ? 'border-red-600 bg-red-900/10 shadow-[0_0_15px_rgba(220,38,38,0.1)]' : 'border-[#4A3B32]/10 bg-[#FAF7F2]/40 hover:border-[#4A3B32]/30'}`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${isSelected ? 'border-red-500 bg-[#4A3B32] text-[#FAF7F2]' : 'border-[#4A3B32]/30 bg-transparent'}`}>
-                            {isSelected && <Check size={12} strokeWidth={4} />}
-                          </div>
-                          <span className={`font-medium text-sm ${isSelected ? 'text-[#4A3B32]' : 'text-[#4A3B32]/80'}`}>{option.name}</span>
-                        </div>
-                        {/* ✅ FIX: También formateamos el precio de cada extra para consistencia */}
-                        <span className={`text-sm font-bold ${isSelected ? 'text-[#4A3B32]' : 'text-[#4A3B32]/60'}`}>
-                          {Number(option.price) > 0 ? `+$${formatPrice(Number(option.price))}` : 'Gratis'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
+              );
+            })
           ) : (
             <p className="text-center text-[#4A3B32]/50 text-xs italic">Este producto no tiene ingredientes extra.</p>
           )}

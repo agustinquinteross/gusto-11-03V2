@@ -19,7 +19,7 @@ export const metadata = {
   title: 'Gusto',
   description: 'Las mejores hamburguesas de Catamarca. Pedí online y recibí en tu casa.',
   icons: {
-    icon: '/logo.jpg'
+    icon: '/logo.png'
   },
 }
 

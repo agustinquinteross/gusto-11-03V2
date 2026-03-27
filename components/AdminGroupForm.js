@@ -11,10 +11,12 @@ export default function AdminGroupForm({ groupToEdit, onCancel, onSaved }) {
   const [type, setType] = useState('single') // 'single' (Radio) o 'multiple' (Checkbox)
   const [isRequired, setIsRequired] = useState(true) // ¿Obligatorio?
   const [maxSelection, setMaxSelection] = useState(5) // Solo para múltiple
+  const [maxPerOption, setMaxPerOption] = useState(1) // Máx. repeticiones por opción (1 = toggle, >1 = Box)
 
   useEffect(() => {
     if (groupToEdit) {
       setName(groupToEdit.name)
+      setMaxPerOption(groupToEdit.max_per_option || 1)
       // Deducir lógica basada en min/max
       if (groupToEdit.max_selection === 1 && groupToEdit.min_selection === 1) {
         setType('single')
@@ -42,14 +44,15 @@ export default function AdminGroupForm({ groupToEdit, onCancel, onSaved }) {
         maxSel = 1
       } else {
         // Selección Múltiple
-        minSel = isRequired ? 1 : 0
+        minSel = isRequired ? parseInt(maxSelection) || 1 : 0
         maxSel = parseInt(maxSelection) || 5
       }
 
       const groupData = {
         name,
         min_selection: minSel,
-        max_selection: maxSel
+        max_selection: maxSel,
+        max_per_option: parseInt(maxPerOption) || 1
       }
 
       if (groupToEdit) {
@@ -128,14 +131,30 @@ export default function AdminGroupForm({ groupToEdit, onCancel, onSaved }) {
 
               {/* Máximo (Solo múltiple) */}
               {type === 'multiple' && (
-                  <div className="pt-3 border-t border-[#4A3B32]/20">
+                  <div className="pt-3 border-t border-[#4A3B32]/20 space-y-4">
                       <div className="flex justify-between items-center">
-                        <div className="text-sm font-bold text-[#4A3B32]/80">Máximo permitido</div>
+                        <div>
+                          <div className="text-sm font-bold text-[#4A3B32]/80">Cantidad a elegir</div>
+                          <div className="text-xs text-[#4A3B32]/50">Total de opciones que debe seleccionar</div>
+                        </div>
                         <input 
                             type="number" 
                             min="1" 
                             value={maxSelection} 
                             onChange={e => setMaxSelection(e.target.value)}
+                            className="w-16 bg-white border border-[#4A3B32]/20 rounded p-1 text-center text-[#4A3B32] outline-none focus:border-red-500"
+                        />
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <div className="text-sm font-bold text-[#4A3B32]/80">Máx. repeticiones por opción</div>
+                          <div className="text-xs text-[#4A3B32]/50">Cuántas veces puede repetir el mismo sabor</div>
+                        </div>
+                        <input 
+                            type="number" 
+                            min="1" 
+                            value={maxPerOption} 
+                            onChange={e => setMaxPerOption(e.target.value)}
                             className="w-16 bg-white border border-[#4A3B32]/20 rounded p-1 text-center text-[#4A3B32] outline-none focus:border-red-500"
                         />
                       </div>

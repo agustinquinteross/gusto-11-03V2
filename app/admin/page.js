@@ -415,8 +415,8 @@ export default function AdminPage() {
       {/* NAVBAR */}
       <nav className="bg-white border-b border-[#4A3B32]/10 p-4 shrink-0 flex justify-between items-center z-40 shadow-sm">
         <div className="flex items-center gap-2">
-          <img src="/logo.svg" alt="Gusto Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
-          <img src="/logo.svg" alt="GA" className="h-12 w-auto sm:hidden object-contain drop-shadow-sm" />
+          <img src="/logo.png" alt="Gusto Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
+          <img src="/logo.png" alt="GA" className="h-12 w-auto sm:hidden object-contain drop-shadow-sm" />
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <audio id="order-alert-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d1da9ac74.mp3?filename=cash-register-kaching-93513.mp3" preload="auto"></audio>
@@ -690,7 +690,7 @@ function LoginScreen({ email, setEmail, password, setPassword, handleLogin, load
       <div className="relative bg-white border border-[#4A3B32]/10 p-8 pt-16 rounded-2xl w-full max-w-md shadow-xl mt-16">
         {/* LOGO FLOTANTE REDONDO */}
         <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-white rounded-full border border-[#4A3B32]/10 shadow-lg flex items-center justify-center p-3">
-            <img src="/logo.svg" alt="Gusto" className="w-full h-full object-contain drop-shadow-sm" />
+            <img src="/logo.png" alt="Gusto" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
 
         <h1 className="text-xl font-black text-center mb-8 text-[#4A3B32] uppercase tracking-widest">
@@ -718,14 +718,10 @@ function LoginScreen({ email, setEmail, password, setPassword, handleLogin, load
             />
           </div>
           <button 
-            disabled={loading} 
-            className="w-full bg-[#4A3B32] text-[#FAF7F2] py-4 rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-[#4A3B32]/20 transform active:scale-[0.98] flex items-center justify-center gap-2"
+            onClick={handleLogin} 
+            className="w-full bg-[#4A3B32] text-[#FAF7F2] p-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition shadow-xl"
           >
-            {loading ? (
-              <Loader2 className="animate-spin" size={20} />
-            ) : (
-              'ENTRAR AL PANEL'
-            )}
+            Sincronizar Acceso
           </button>
         </form>
       </div>
