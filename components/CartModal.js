@@ -209,7 +209,7 @@ export default function CartModal({ isOpen, onClose }) {
     // ✅ FIX: Link de Google Maps estándar y funcional
     const mapLink = coords ? `https://www.google.com/maps?q=${coords.lat},${coords.lng}` : ''
     
-    let msg = `Hola Gusto! ✨%0A%0ASoy *${name}*.%0APedido *%23${order.id}*%0A`
+    let msg = `Hola Gustó! ✨%0A%0ASoy *${name}*.%0APedido *%23${order.id}*%0A`
     
     if (deliveryType === 'delivery') {
         msg += `%0A🛵 *ENVÍO A DOMICILIO*`

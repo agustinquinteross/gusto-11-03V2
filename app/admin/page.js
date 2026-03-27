@@ -207,7 +207,7 @@ export default function AdminPage() {
           // 3. (Opcional) Notificación visible en pantalla si estás fuera del tab
           if (typeof window !== 'undefined' && 'Notification' in window) {
               if (Notification.permission === "granted") {
-                  new Notification("Gusto | ¡NUEVO PEDIDO!", { body: `Ingresó un pedido de ${payload.new.customer_name} por $${payload.new.total}` })
+                  new Notification("Gustó | ¡NUEVO PEDIDO!", { body: `Ingresó un pedido de ${payload.new.customer_name} por $${payload.new.total}` })
               }
           }
         }
@@ -415,7 +415,7 @@ export default function AdminPage() {
       {/* NAVBAR */}
       <nav className="bg-white border-b border-[#4A3B32]/10 p-4 shrink-0 flex justify-between items-center z-40 shadow-sm">
         <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="Gusto Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
+          <img src="/logo.png" alt="Gustó Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
           <img src="/logo.png" alt="GA" className="h-12 w-auto sm:hidden object-contain drop-shadow-sm" />
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
@@ -690,7 +690,7 @@ function LoginScreen({ email, setEmail, password, setPassword, handleLogin, load
       <div className="relative bg-white border border-[#4A3B32]/10 p-8 pt-16 rounded-2xl w-full max-w-md shadow-xl mt-16">
         {/* LOGO FLOTANTE REDONDO */}
         <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-24 h-24 bg-white rounded-full border border-[#4A3B32]/10 shadow-lg flex items-center justify-center p-3">
-            <img src="/logo.png" alt="Gusto" className="w-full h-full object-contain drop-shadow-sm" />
+            <img src="/logo.png" alt="Gustó" className="w-full h-full object-contain drop-shadow-sm" />
         </div>
 
         <h1 className="text-xl font-black text-center mb-8 text-[#4A3B32] uppercase tracking-widest">

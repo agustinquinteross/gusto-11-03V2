@@ -16,7 +16,7 @@ const greatVibes = Great_Vibes({
 });
 
 export const metadata = {
-  title: 'Gusto',
+  title: 'Gustó',
   description: 'Las mejores hamburguesas de Catamarca. Pedí online y recibí en tu casa.',
   icons: {
     icon: '/logo.png'

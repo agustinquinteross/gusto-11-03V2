@@ -127,7 +127,7 @@ export default function PromoCarousel() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-6">
                 {banner.title && (
-                  <h2 className="text-[#4A3B32] font-black text-xl sm:text-3xl italic tracking-tighter drop-shadow-lg">
+                  <h2 className="text-white font-black text-xl sm:text-3xl italic tracking-tighter" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>
                     {banner.title}
                   </h2>
                 )}

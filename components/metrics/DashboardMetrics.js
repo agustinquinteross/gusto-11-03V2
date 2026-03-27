@@ -205,7 +205,7 @@ export default function DashboardMetrics() {
     const element = document.getElementById('pdf-report-container');
     const opt = {
       margin:       0,
-      filename:     `Gusto_Analítica_${getLabelForPeriod().replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`,
+      filename:     `Gustó_Analítica_${getLabelForPeriod().replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`,
       image:        { type: 'jpeg', quality: 0.98 },
       html2canvas:  { scale: 2, useCORS: true, letterRendering: true, logging: false },
       jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
@@ -281,7 +281,7 @@ export default function DashboardMetrics() {
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 no-print bg-white p-6 rounded-[24px] border border-[#4A3B32]/10 shadow-sm">
           <div>
             <h1 className="df text-6xl text-[#4A3B32] leading-none tracking-tight">INTELIGENCIA</h1>
-            <p className="text-sm font-bold text-[#D4A373] uppercase tracking-[0.2em] mt-1">Gusto • Business Analytics</p>
+            <p className="text-sm font-bold text-[#D4A373] uppercase tracking-[0.2em] mt-1">Gustó • Business Analytics</p>
           </div>
           
           <div className="flex flex-col items-end gap-3 w-full lg:w-auto">

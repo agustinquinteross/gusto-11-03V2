@@ -175,7 +175,7 @@ export default function Home() {
         <div className="relative z-10 flex flex-col items-center">
           {/* Logo animado lentamente */}
           <div className="mb-8 hover:scale-105 transition-transform duration-700">
-             <img src="/logo.png" alt="Gusto" className="w-56 sm:w-64 object-contain drop-shadow-xl opacity-90" />
+             <img src="/logo.png" alt="Gustó" className="w-56 sm:w-64 object-contain drop-shadow-xl opacity-90" />
           </div>
           
           <h1 className="text-4xl sm:text-5xl font-black italic tracking-tighter mb-4 text-[#4A3B32]">CERRADO</h1>
@@ -205,7 +205,7 @@ export default function Home() {
             50% { transform: translateY(-6px); }
           }
         `}} />
-        <img src="/logo.png" alt="Gusto" className="w-full max-w-[280px] sm:max-w-[360px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
+        <img src="/logo.png" alt="Gustó" className="w-full max-w-[280px] sm:max-w-[360px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
       </div>
 
       {/* BARRA DE NAVEGACIÓN STICKY */}
@@ -312,7 +312,7 @@ export default function Home() {
       {/* FOOTER */}
       <footer className="bg-[#4A3B32] text-[#FAF7F2] mt-12 px-6 pb-20">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center py-10 gap-5">
-          <img src="/logo.png" alt="Gusto" className="h-16 w-auto object-contain" style={{ filter: 'brightness(0) invert(0.93) sepia(0.15)' }} />
+          <img src="/logo.png" alt="Gustó" className="h-16 w-auto object-contain" style={{ filter: 'brightness(0) invert(0.93) sepia(0.15)' }} />
           
           <div className="space-y-1">
             <p className="text-[#FAF7F2]/90 font-bold text-sm">San Fernando del Valle de Catamarca</p>
