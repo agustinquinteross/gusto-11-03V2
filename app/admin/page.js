@@ -466,7 +466,7 @@ export default function AdminPage() {
           <img src="/logo.png" alt="Gustó Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
           <img src="/logo.png" alt="GA" className="h-8 w-auto sm:hidden object-contain drop-shadow-sm" />
         </div>
-        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar sm:gap-4 flex-1 justify-end py-1">
+        <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar sm:gap-4 flex-1 justify-start sm:justify-end py-1 px-2 touch-pan-x">
           <audio id="order-alert-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d1da9ac74.mp3?filename=cash-register-kaching-93513.mp3" preload="auto"></audio>
           
           <button onClick={() => {
@@ -483,16 +483,16 @@ export default function AdminPage() {
               } else {
                  setSoundEnabled(false);
               }
-          }} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm ${soundEnabled ? 'bg-green-600 text-[#FAF7F2]' : 'bg-red-500 text-white shadow-red-200'}`}>
+          }} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm whitespace-nowrap ${soundEnabled ? 'bg-green-600 text-white' : 'bg-red-500 text-white'}`}>
              {soundEnabled ? '🔔 ON' : '🔕 SONIDO'}
           </button>
 
-          <button onClick={toggleStoreStatus} disabled={updatingStore} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm ${storeOpen ? 'bg-green-600 text-[#FAF7F2]' : 'bg-[#4A3B32] text-[#FAF7F2]'}`}>
+          <button onClick={toggleStoreStatus} disabled={updatingStore} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm whitespace-nowrap ${storeOpen ? 'bg-green-600 text-white' : 'bg-[#4A3B32] text-[#FAF7F2]'}`}>
             {storeOpen ? <Unlock size={12}/> : <Lock size={12}/>}
             {storeOpen ? 'ABIERTO' : 'CERRADO'}
           </button>
 
-          <div className="flex bg-[#4A3B32]/5 rounded-lg p-1 shrink-0 gap-0.5 border border-[#4A3B32]/10 shadow-inner">
+          <div className="flex bg-[#4A3B32]/5 rounded-lg p-1 shrink-0 gap-0.5 border border-[#4A3B32]/10 items-center">
              {[
                {id:'orders',icon:ShoppingBag},
                {id:'menu',icon:Utensils},
@@ -502,8 +502,8 @@ export default function AdminPage() {
                {id:'metrics',icon:TrendingUp},
                {id:'settings',icon:Settings}
              ].map(t => (<button key={t.id} onClick={() => setActiveTab(t.id)} className={`p-2 rounded transition-all active:scale-90 ${activeTab === t.id ? 'bg-white text-[#4A3B32] shadow-sm' : 'text-[#4A3B32]/60 hover:text-[#4A3B32]'}`}><t.icon size={16}/></button>))}
-             <div className="w-px h-6 bg-[#4A3B32]/10 mx-1 self-center"></div>
-             <button onClick={handleLogout} className="p-2 text-[#4A3B32]/40 hover:text-red-500 transition-colors"><LogOut size={16}/></button>
+             <div className="w-px h-6 bg-[#4A3B32]/10 mx-1"></div>
+             <button onClick={handleLogout} className="p-2 text-[#4A3B32]/40 hover:text-red-500 transition-colors shrink-0"><LogOut size={16}/></button>
           </div>
         </div>
       </nav>
