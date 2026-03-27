@@ -145,6 +145,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
     onAddToCart({
       ...product,
       selectedOptions: optionsList,
+      basePrice: Number(product.price),
       price: unitPrice,
       quantity: qty,
       note: note

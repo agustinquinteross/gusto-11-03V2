@@ -16,7 +16,7 @@ import {
   Plus, Trash2, Layers, Ticket, MapPin, Edit, X, Calendar, 
   Hash, Megaphone, Lock, Unlock, CheckCircle, Clock, Truck, 
   MessageCircle, CreditCard, Wallet, AlertCircle, GripVertical, Printer, Zap,
-  TrendingUp, Search, FolderPlus,
+  TrendingUp, Search, FolderPlus, ChevronRight,
   Settings, Save, Phone, LayoutDashboard, Image as ImageIcon, UploadCloud // <-- NUEVOS ICONOS AÑADIDOS
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -180,11 +180,12 @@ export default function AdminPage() {
   // 1. INICIALIZACIÓN (Mover useEffect aquí para evitar Hoisting)
   // =========================================
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      if (session) loadAllData()
-      else setLoading(false)
-    })
+    // 🔥 FORZAR LOGIN FRESCO: Cerramos cualquier sesión previa al cargar para que siempre pida datos
+    const forceFreshLogin = async () => {
+      await supabase.auth.signOut()
+      setLoading(false)
+    }
+    forceFreshLogin()
 
     // CANAL DE TIEMPO REAL: ESCUCHANDO NUEVOS PEDIDOS (Solo INSERT)
     const channel = supabase
@@ -301,6 +302,44 @@ export default function AdminPage() {
   const handleDragOver = (e, colId) => { e.preventDefault(); if (isDraggingOver !== colId) setIsDraggingOver(colId) }
   const handleDrop = async (e, newStatus) => { e.preventDefault(); setIsDraggingOver(null); if (!draggedOrder || draggedOrder.status === newStatus) return; setOrders(prev => prev.map(o => o.id === draggedOrder.id ? { ...o, status: newStatus } : o)); const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', draggedOrder.id); if (error) { alert('Error al mover pedido'); fetchOrders() } }
 
+  // Botón rápido para avanzar estado
+  const STATUS_FLOW = ['pending', 'cooking', 'delivery', 'completed']
+  const advanceOrderStatus = async (order) => {
+    const currentIndex = STATUS_FLOW.indexOf(order.status)
+    if (currentIndex < 0 || currentIndex >= STATUS_FLOW.length - 1) return
+    const newStatus = STATUS_FLOW[currentIndex + 1]
+    setOrders(prev => prev.map(o => o.id === order.id ? { ...o, status: newStatus } : o))
+    const { error } = await supabase.from('orders').update({ status: newStatus }).eq('id', order.id)
+    if (error) { alert('Error al cambiar estado'); fetchOrders() }
+  }
+
+  const deleteOrder = async (id) => {
+    if (!confirm('¿Estás seguro de eliminar este pedido?')) return
+    
+    // 1. Restaurar Stock antes de borrar
+    const orderToRestore = orders.find(o => o.id === id)
+    if (orderToRestore && orderToRestore.order_items) {
+      for (const item of orderToRestore.order_items) {
+        // Buscamos el producto en la lista de productos actual para ver su stock
+        const product = products.find(p => p.name === item.product_name)
+        if (product && product.stock !== undefined && product.stock !== null) {
+          const newStock = Number(product.stock) + Number(item.quantity)
+          await supabase.from('products').update({ stock: newStock }).eq('id', product.id)
+        }
+      }
+    }
+
+    // 2. Borrar de base de datos
+    await supabase.from('order_items').delete().eq('order_id', id)
+    const { error } = await supabase.from('orders').delete().eq('id', id)
+    
+    if (error) alert('Error al eliminar pedido: ' + error.message)
+    else {
+      fetchOrders()
+      fetchProducts() // Actualizar stock en la UI
+    }
+  }
+
   // =========================================
   // ACTIONS
   // =========================================
@@ -401,7 +440,16 @@ export default function AdminPage() {
       >
           <div className="flex justify-between items-start border-b border-[#4A3B32]/10 pb-2 pointer-events-none">
              <div className="flex items-center gap-2"><GripVertical size={16} className="text-[#4A3B32]/50 group-hover:text-[#4A3B32]/70 transition-colors"/><div><span className="font-black text-[#4A3B32] text-lg">#{order.id}</span><p className="text-xs text-[#4A3B32]/70 font-bold uppercase truncate max-w-[120px]">{order.customer_name}</p></div></div>
-             <div className="flex flex-col items-end gap-1 pointer-events-auto"><button onClick={() => printOrder(order)} className="p-1.5 bg-[#4A3B32]/5 hover:bg-[#4A3B32]/10 text-[#4A3B32]/70 hover:text-[#4A3B32] rounded transition mb-1" title="Imprimir"><Printer size={14} /></button><span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide ${order.delivery_method === 'delivery' ? 'bg-[#4A3B32] text-[#FAF7F2] shadow-sm' : 'bg-white text-[#4A3B32] border border-[#4A3B32]/30 shadow-sm'}`}>{order.delivery_method === 'delivery' ? 'Delivery' : 'Retiro'}</span></div>
+              <div className="flex flex-col items-end gap-1 pointer-events-auto">
+                <div className="flex gap-1">
+                  <button onClick={() => deleteOrder(order.id)} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded transition mb-1" title="Eliminar"><Trash2 size={14} /></button>
+                  <button onClick={() => printOrder(order)} className="p-1.5 bg-[#4A3B32]/5 hover:bg-[#4A3B32]/10 text-[#4A3B32]/70 hover:text-[#4A3B32] rounded transition mb-1" title="Imprimir"><Printer size={14} /></button>
+                </div>
+                <div className="flex items-center gap-1.5"><span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide ${order.delivery_method === 'delivery' ? 'bg-[#4A3B32] text-[#FAF7F2] shadow-sm' : 'bg-white text-[#4A3B32] border border-[#4A3B32]/30 shadow-sm'}`}>{order.delivery_method === 'delivery' ? 'Delivery' : 'Retiro'}</span>{order.status !== 'completed' && (<button onClick={(e) => { e.stopPropagation(); advanceOrderStatus(order) }} className={`text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wide transition-all active:scale-95 flex items-center gap-1 ${
+              order.status === 'pending' ? 'bg-red-500 text-white' :
+              order.status === 'cooking' ? 'bg-blue-500 text-white' :
+              'bg-green-500 text-white'
+            }`}><ChevronRight size={10} />{order.status === 'pending' ? 'Cocina' : order.status === 'cooking' ? 'Enviar' : 'Listo'}</button>)}</div></div>
           </div>
           <div className="space-y-2 py-1 pointer-events-none">{order.order_items.map(item => (<div key={item.id} className="text-sm leading-tight"><div className="flex gap-2"><span className="text-red-500 font-bold">{item.quantity}x</span> <span className="text-[#4A3B32]/90">{item.product_name}</span></div>{item.options && <p className="text-[10px] text-[#4A3B32]/60 ml-6 line-clamp-1">+ {item.options}</p>}{item.note && <p className="text-[10px] text-yellow-500 ml-6 italic bg-yellow-900/10 px-1.5 py-0.5 rounded inline-block mt-0.5 border border-yellow-900/20">📝 {item.note}</p>}</div>))}</div>
           <div className="pt-2 mt-auto border-t border-[#4A3B32]/10 pointer-events-none"><div className="flex justify-between items-center mb-2"><span className="text-xs text-[#4A3B32]/70 font-medium flex items-center gap-1 uppercase">{order.payment_method === 'mercadopago' ? <CreditCard size={12} className="text-sky-400"/> : <Wallet size={12} className="text-green-500"/>}{order.payment_method || 'Efectivo'}</span><span className="text-lg font-black text-[#4A3B32]">${order.total}</span></div>{order.delivery_method === 'delivery' && (<div className="text-[10px] text-[#4A3B32]/70 mb-2 flex items-start gap-1 bg-white p-1.5 rounded"><MapPin size={10} className="mt-0.5 text-red-500"/> <span className="line-clamp-2">{order.customer_address}</span></div>)}</div>
@@ -418,7 +466,7 @@ export default function AdminPage() {
           <img src="/logo.png" alt="Gustó Admin" className="h-16 w-auto hidden sm:block object-contain drop-shadow-sm" />
           <img src="/logo.png" alt="GA" className="h-12 w-auto sm:hidden object-contain drop-shadow-sm" />
         </div>
-        <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center gap-2 max-w-[calc(100vw-100px)] overflow-x-auto hide-scrollbar sm:gap-4 flex-1 justify-end py-1">
           <audio id="order-alert-sound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d1da9ac74.mp3?filename=cash-register-kaching-93513.mp3" preload="auto"></audio>
           
           <button onClick={() => {
@@ -426,7 +474,7 @@ export default function AdminPage() {
                  setSoundEnabled(true);
                  const audioEl = document.getElementById('order-alert-sound');
                  if (audioEl) { 
-                     audioEl.volume = 0; // Silencio para desbloquear sin asustar
+                     audioEl.volume = 0;
                      audioEl.play().then(() => { audioEl.pause(); audioEl.volume = 1; }).catch(()=>{}); 
                  }
                  if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission !== "granted") {
@@ -435,13 +483,16 @@ export default function AdminPage() {
               } else {
                  setSoundEnabled(false);
               }
-          }} className={`flex items-center gap-1 sm:gap-2 px-4 py-2 rounded-full font-black text-xs sm:text-sm uppercase tracking-widest transition-all ${soundEnabled ? 'bg-green-600 text-[#FAF7F2]' : 'bg-red-500 text-white animate-pulse'}`}>
-             {soundEnabled ? '🔔 ALERT ON' : '🔕 SONIDO'}
+          }} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm ${soundEnabled ? 'bg-green-600 text-[#FAF7F2]' : 'bg-red-500 text-white shadow-red-200'}`}>
+             {soundEnabled ? '🔔 ON' : '🔕 SONIDO'}
           </button>
 
-          <button onClick={toggleStoreStatus} disabled={updatingStore} className={`flex items-center gap-1 sm:gap-2 px-4 py-2 rounded-full font-black text-xs sm:text-sm uppercase tracking-widest transition-all ${storeOpen ? 'bg-green-600 text-[#FAF7F2]' : 'bg-[#4A3B32] text-[#FAF7F2]'}`}>{storeOpen ? <Unlock size={14}/> : <Lock size={14}/>} <span className="hidden sm:inline">{storeOpen ? 'ABIERTO' : 'CERRADO'}</span></button>
-          <div className="h-6 w-px bg-[#4A3B32]/10 mx-1 sm:mx-2"></div>
-          <div className="flex bg-[#4A3B32]/5 rounded-lg p-1 overflow-x-auto hide-scrollbar">
+          <button onClick={toggleStoreStatus} disabled={updatingStore} className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full font-black text-[10px] uppercase tracking-wider transition-all shadow-sm ${storeOpen ? 'bg-green-600 text-[#FAF7F2]' : 'bg-[#4A3B32] text-[#FAF7F2]'}`}>
+            {storeOpen ? <Unlock size={12}/> : <Lock size={12}/>}
+            {storeOpen ? 'ABIERTO' : 'CERRADO'}
+          </button>
+
+          <div className="flex bg-[#4A3B32]/5 rounded-lg p-1 shrink-0 gap-0.5 border border-[#4A3B32]/10 shadow-inner">
              {[
                {id:'orders',icon:ShoppingBag},
                {id:'menu',icon:Utensils},
@@ -449,10 +500,11 @@ export default function AdminPage() {
                {id:'coupons',icon:Ticket},
                {id:'promos',icon:Megaphone},
                {id:'metrics',icon:TrendingUp},
-               {id:'settings',icon:Settings} // <-- NUEVA PESTAÑA AÑADIDA
-             ].map(t => (<button key={t.id} onClick={() => setActiveTab(t.id)} className={`p-2 rounded transition ${activeTab === t.id ? 'bg-[#4A3B32]/10 text-[#4A3B32] shadow' : 'text-[#4A3B32]/70 hover:text-[#4A3B32]/90'}`}><t.icon size={18}/></button>))}
+               {id:'settings',icon:Settings}
+             ].map(t => (<button key={t.id} onClick={() => setActiveTab(t.id)} className={`p-2 rounded transition-all active:scale-90 ${activeTab === t.id ? 'bg-white text-[#4A3B32] shadow-sm' : 'text-[#4A3B32]/60 hover:text-[#4A3B32]'}`}><t.icon size={16}/></button>))}
+             <div className="w-px h-6 bg-[#4A3B32]/10 mx-1 self-center"></div>
+             <button onClick={handleLogout} className="p-2 text-[#4A3B32]/40 hover:text-red-500 transition-colors"><LogOut size={16}/></button>
           </div>
-          <button onClick={handleLogout} className="text-[#4A3B32]/60 hover:text-red-500"><LogOut size={18}/></button>
         </div>
       </nav>
 
@@ -721,7 +773,7 @@ function LoginScreen({ email, setEmail, password, setPassword, handleLogin, load
             onClick={handleLogin} 
             className="w-full bg-[#4A3B32] text-[#FAF7F2] p-4 rounded-xl font-black text-xs uppercase tracking-[0.2em] hover:bg-black transition shadow-xl"
           >
-            Sincronizar Acceso
+            Entrar al panel
           </button>
         </form>
       </div>

@@ -2,13 +2,13 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../store/useCart'
 import { supabase } from '../lib/supabase'
-import { X, Loader2, MapPin, Store, Search, Trash2, Ticket, CreditCard, MessageCircle, Wallet, Gift } from 'lucide-react'
+import { X, Loader2, MapPin, Store, Search, Trash2, Ticket, CreditCard, MessageCircle, Wallet, Gift, ChevronDown } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false, loading: () => <div className="h-40 bg-[#4A3B32]/5 animate-pulse rounded-xl"/> })
 
 // 📍 COORDENADAS EXACTAS DE GUSTO
-const RESTAURANT_COORDS = { lat: -28.467833, lng: -65.773611 }
+const RESTAURANT_COORDS = { lat: -28.4746029, lng: -65.7761164 }
 
 function calculateDistanceKM(lat1, lon1, lat2, lon2) {
   const R = 6371; 
@@ -46,6 +46,11 @@ export default function CartModal({ isOpen, onClose }) {
 
   const [distanceKm, setDistanceKm] = useState(0)
   const [deliveryCost, setDeliveryCost] = useState(0)
+
+  // Autocomplete de dirección
+  const [suggestions, setSuggestions] = useState([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [searchTimeout, setSearchTimeout] = useState(null)
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -86,7 +91,8 @@ export default function CartModal({ isOpen, onClose }) {
     const offer = item.special_offers
     if (!offer || offer.is_active === false) return 0
     const qty   = Math.max(0, Number(item.quantity) || 0)
-    const price = Math.max(0, Number(item.price)    || 0)
+    // ✅ FIX: Usar precio base del producto (sin extras) para calcular descuentos
+    const price = Math.max(0, Number(item.basePrice || item.price) || 0)
     try {
       if (offer.type === 'nxm' || offer.type === '2x1') {
         let n = 2, m = 1; 
@@ -122,19 +128,46 @@ export default function CartModal({ isOpen, onClose }) {
   
   const total = Math.max(0, subtotal - discountAmount - promoSavings + deliveryCost)
 
-  const handleSearchAddress = async () => {
-    if (!address) return
-    setSearchingMap(true)
+  const handleSearchAddress = async (query) => {
+    if (!query || query.length < 3) { setSuggestions([]); return }
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', San Fernando del Valle de Catamarca, Argentina')}`)
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=6&viewbox=-65.85,-28.55,-65.65,-28.40&bounded=1&countrycodes=ar&addressdetails=1`)
       const data = await response.json()
       if (data && data.length > 0) {
-        const { lat, lon } = data[0]
-        setForcedCoords({ lat: parseFloat(lat), lng: parseFloat(lon) })
-        setCoords({ lat: parseFloat(lat), lng: parseFloat(lon) })
-      } else { alert('📍 Dirección no encontrada en mapa.') }
+        setSuggestions(data.map(d => {
+          const street = d.address?.road || ''
+          const number = d.address?.house_number || ''
+          const neighborhood = d.address?.neighbourhood || d.address?.suburb || d.address?.city_district || ''
+          const city = d.address?.city || d.address?.town || d.address?.village || ''
+          
+          let label = street
+          if (number) label += ` ${number}`
+          if (neighborhood) label += `, ${neighborhood}`
+          if (city && !neighborhood.includes(city)) label += ` (${city})`
+          
+          // Si no hay calle, usamos display_name corto
+          if (!street) label = d.display_name.split(',').slice(0, 2).join(',')
+          
+          return { label, lat: parseFloat(d.lat), lng: parseFloat(d.lon) }
+        }))
+        setShowSuggestions(true)
+      } else { setSuggestions([]) }
     } catch (error) { console.error(error) }
-    setSearchingMap(false)
+  }
+
+  const handleSelectSuggestion = (suggestion) => {
+    setAddress(suggestion.label)
+    setForcedCoords({ lat: suggestion.lat, lng: suggestion.lng })
+    setCoords({ lat: suggestion.lat, lng: suggestion.lng })
+    setSuggestions([])
+    setShowSuggestions(false)
+  }
+
+  const handleAddressChange = (value) => {
+    setAddress(value)
+    if (searchTimeout) clearTimeout(searchTimeout)
+    const timeout = setTimeout(() => handleSearchAddress(value), 200)
+    setSearchTimeout(timeout)
   }
 
   const handleApplyCoupon = async () => {
@@ -302,13 +335,23 @@ export default function CartModal({ isOpen, onClose }) {
 
             {deliveryType === 'delivery' && (
                 <div className="space-y-3 animate-in fade-in zoom-in-95 duration-300">
-                    <div className="flex gap-2">
-                        <input type="text" placeholder="Calle y Número" className="flex-1 p-3 bg-[#FAF7F2] border border-[#4A3B32]/20 rounded-xl text-[#4A3B32] focus:border-red-600 outline-none transition-all" value={address} onChange={e => setAddress(e.target.value)} />
-                        <button onClick={handleSearchAddress} className="bg-[#4A3B32]/5 text-[#4A3B32] p-3 rounded-xl border border-[#4A3B32]/20 hover:bg-[#4A3B32]/10 transition-colors">{searchingMap ? <Loader2 className="animate-spin"/> : <Search />}</button>
+                    <div className="relative">
+                        <input type="text" placeholder="Escribí tu dirección..." className="w-full p-3 bg-[#FAF7F2] border border-[#4A3B32]/20 rounded-xl text-[#4A3B32] focus:border-red-600 outline-none transition-all pr-10" value={address} onChange={e => handleAddressChange(e.target.value)} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} />
+                        {address && <Search size={18} className="absolute right-3 top-3.5 text-[#4A3B32]/40" />}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-white border border-[#4A3B32]/20 rounded-xl shadow-lg overflow-hidden">
+                                {suggestions.map((s, i) => (
+                                    <button key={i} onClick={() => handleSelectSuggestion(s)} className="w-full text-left px-4 py-3 text-sm text-[#4A3B32] hover:bg-[#FAF7F2] border-b border-[#4A3B32]/5 last:border-0 transition-colors flex items-start gap-2">
+                                        <MapPin size={14} className="text-red-500 mt-0.5 shrink-0" />
+                                        <span className="line-clamp-1">{s.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                     
-                    <div className="rounded-xl overflow-hidden border border-[#4A3B32]/10 h-40 ring-1 ring-white/5 relative">
-                        <MapPicker setLocation={setCoords} forcedCoords={forcedCoords} />
+                    <div className="rounded-xl overflow-hidden border border-[#4A3B32]/10 h-48 ring-1 ring-white/5 relative">
+                        <MapPicker setLocation={setCoords} forcedCoords={forcedCoords} restaurantCoords={RESTAURANT_COORDS} />
                     </div>
 
                     <div className={`p-4 rounded-xl border transition-all ${coords ? 'bg-green-900/10 border-green-800/50' : 'bg-white border-[#4A3B32]/10'}`}>
@@ -332,7 +375,6 @@ export default function CartModal({ isOpen, onClose }) {
             <select className="w-full p-3 bg-[#FAF7F2] border border-[#4A3B32]/20 rounded-xl text-[#4A3B32] focus:border-red-600 outline-none" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}>
                 <option value="efectivo">💵 Efectivo</option>
                 <option value="transferencia">🏦 Transferencia</option>
-                <option value="mercadopago">💳 Mercado Pago</option>
             </select>
         </div>
 
@@ -345,9 +387,6 @@ export default function CartModal({ isOpen, onClose }) {
             <div className="flex justify-between text-2xl font-black text-[#4A3B32] pt-2 mb-4"><span>Total</span><span className="text-[#4A3B32]">${total}</span></div>
             
             <div className="space-y-3">
-                <button onClick={() => alert("MP En mantenimiento")} disabled={loading || cart.length === 0} className="w-full bg-blue-600 text-[#4A3B32] py-3 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-blue-500 disabled:opacity-50 transition-all">
-                    <CreditCard size={20}/> PAGAR CON MERCADO PAGO
-                </button>
                 <button onClick={handleCheckout} disabled={loading || cart.length === 0 || (deliveryType === 'delivery' && !coords)} className="w-full bg-green-600 text-[#4A3B32] py-4 rounded-xl font-black flex justify-center items-center gap-2 hover:bg-green-500 disabled:opacity-50 shadow-lg shadow-green-900/20 transition-all uppercase tracking-widest text-sm">
                     {loading ? <Loader2 className="animate-spin"/> : <><MessageCircle size={20}/> Enviar Pedido</>}
                 </button>
