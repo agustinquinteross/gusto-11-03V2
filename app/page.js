@@ -198,14 +198,14 @@ export default function Home() {
     <div className="min-h-screen bg-[#FAF7F2] font-sans text-[#4A3B32] pb-24">
 
       {/* HERO BANNER - LOGO EXCLUSIVO */}
-      <div className="relative pt-4 pb-0 bg-[#FAF7F2] flex flex-col items-center justify-center text-center w-full z-10">
+      <div className="relative pt-8 pb-4 bg-[#FAF7F2] flex flex-col items-center justify-center text-center w-full z-10">
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes gentleFloat {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-6px); }
           }
         `}} />
-        <img src="/logo.png" alt="Gusto" className="w-full max-w-[180px] sm:max-w-[260px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
+        <img src="/logo.png" alt="Gusto" className="w-full max-w-[280px] sm:max-w-[360px] px-4 object-contain drop-shadow-xl select-none" style={{ animation: 'gentleFloat 4s ease-in-out infinite' }} />
       </div>
 
       {/* BARRA DE NAVEGACIÓN STICKY */}
@@ -241,12 +241,12 @@ export default function Home() {
       <PromoCarousel />
 
       {/* GRILLA DE PRODUCTOS */}
-      <main className="max-w-6xl mx-auto p-3 sm:p-6">
+      <main className="max-w-6xl mx-auto p-4 sm:p-6">
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-[#4A3B32]" size={40} /></div>
         ) : (
           <>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredProducts.map(product => (
                 <div key={product.id} onClick={() => product.stock !== 0 && setSelectedProduct(product)} className={`bg-white border border-[#4A3B32]/10 rounded-2xl overflow-hidden transition-all group relative ${product.stock === 0 ? 'opacity-75 cursor-not-allowed grayscale-[0.2]' : 'hover:border-[#4A3B32]/30 cursor-pointer shadow-sm hover:shadow-md'}`}>
 
@@ -296,10 +296,10 @@ export default function Home() {
                     )}
                     <div className="absolute bottom-2 right-2 bg-[#4A3B32]/90 backdrop-blur text-[#FAF7F2] px-3 py-1 rounded-lg font-bold border border-[#4A3B32]">${product.price}</div>
                   </div>
-                  <div className="p-3 sm:p-4">
-                    <h3 className="text-base sm:text-2xl font-serif text-[#4A3B32] mb-1 leading-tight line-clamp-1">{product.name}</h3>
-                    <p className="text-xs sm:text-sm text-[#4A3B32]/70 line-clamp-2 hidden sm:block">{product.description}</p>
-                    <button className="mt-2 sm:mt-4 w-full bg-transparent border border-[#4A3B32] hover:bg-[#4A3B32] text-[#4A3B32] hover:text-[#FAF7F2] font-bold uppercase tracking-widest text-[10px] sm:text-xs py-2 sm:py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">Ver Detalles</button>
+                  <div className="p-4">
+                    <h3 className="text-2xl font-serif text-[#4A3B32] mb-1 leading-tight">{product.name}</h3>
+                    <p className="text-sm text-[#4A3B32]/70 line-clamp-2">{product.description}</p>
+                    <button className="mt-4 w-full bg-transparent border border-[#4A3B32] hover:bg-[#4A3B32] text-[#4A3B32] hover:text-[#FAF7F2] font-bold uppercase tracking-widest text-xs py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2">Ver Detalles</button>
                   </div>
                 </div>
               ))}
@@ -332,8 +332,13 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="max-w-6xl mx-auto text-center text-[#FAF7F2]/25 text-[11px] pt-5 border-t border-[#FAF7F2]/10">
-          <p>&copy; 2026 Gusto &middot; <a href="https://pulso.app" target="_blank" rel="noopener noreferrer" className="hover:text-[#FAF7F2]/50 transition">Creado con ♥ por <span className="font-bold">pulso.app</span></a></p>
+        <div className="max-w-6xl mx-auto text-center pt-6 border-t border-[#FAF7F2]/10 space-y-3 pb-2">
+          <p className="text-[#FAF7F2]/25 text-[11px]">Gustó &copy; 2026 &middot; Todos los derechos reservados</p>
+          <a href="https://pulso-apps.vercel.app" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 text-[#FAF7F2]/40 hover:text-[#FAF7F2]/70 transition-all group">
+            <span className="text-xs tracking-wide">Creado por</span>
+            <img src="/logopulso.png" alt="Pulso" className="h-7 w-auto group-hover:scale-105 transition-transform" style={{ filter: 'brightness(0) invert(0.93) sepia(0.15)' }} />
+            <span className="text-sm font-black tracking-wide">pulso.app</span>
+          </a>
         </div>
       </footer>
 

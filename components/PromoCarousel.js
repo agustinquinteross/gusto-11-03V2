@@ -110,8 +110,8 @@ export default function PromoCarousel() {
   if (banners.length === 0) return null
 
   return (
-    <div className="relative group w-full max-w-6xl mx-auto px-4 mt-6">
-      <div className="relative w-full aspect-[4/3] sm:aspect-video md:aspect-[21/9] lg:aspect-[3/1] overflow-hidden rounded-2xl shadow-2xl border border-[#4A3B32]/10">
+    <div className="relative group w-full max-w-6xl mx-auto px-4 mt-3">
+      <div className="relative w-full aspect-[3/2] sm:aspect-[2/1] md:aspect-[21/9] lg:aspect-[3/1] overflow-hidden rounded-2xl shadow-lg border border-[#4A3B32]/10">
 
         {/* Imágenes */}
         <div
