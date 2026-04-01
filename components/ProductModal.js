@@ -67,7 +67,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
       // Checkbox (selección múltiple, toggle 0/1)
       setSelectedOptions(prev => {
         const current = prev[option.id] || 0;
-        const groupTotal = getGroupTotal(group);
+        const groupTotal = (group.modifier_options || []).reduce((sum, opt) => sum + (prev[opt.id] || 0), 0);
 
         if (current > 0) {
           const newState = { ...prev };
@@ -157,9 +157,8 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
 
   // 4. Renderizado
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#FAF7F2]/90 backdrop-blur-sm animate-in fade-in">
-
-      <div className="bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh] border border-[#4A3B32]/10 text-[#4A3B32]/90">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-[#FAF7F2]/90 backdrop-blur-sm animate-in fade-in">
+      <div className="bg-white w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg rounded-none sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col border sm:border-[#4A3B32]/10 text-[#4A3B32]/90">
 
         {/* Imagen Header */}
         <div className="relative min-h-[200px] bg-[#4A3B32]/5 shrink-0 flex justify-center items-center">
@@ -236,20 +235,29 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
                       const optQty = selectedOptions[option.id] || 0;
                       const isSelected = optQty > 0;
                       const maxPerOpt = group.max_per_option || 1;
-                      const canAdd = groupTotal < (group.max_selection || 999) && optQty < maxPerOpt && option.is_available;
+                      
+                      // Calcular total de este grupo al vuelo para saber si canAdd
+                      const currentGroupTotal = (group.modifier_options || []).reduce((sum, opt) => sum + (selectedOptions[opt.id] || 0), 0);
+                      const canAdd = currentGroupTotal < (group.max_selection || 999) && optQty < maxPerOpt && option.is_available;
 
                       if (isBox) {
                         // --- MODO BOX: +/- por opción ---
                         return (
                           <div
                             key={option.id}
-                            className={`flex justify-between items-center p-3 rounded-xl border transition-all
+                            onClick={() => {
+                              // Al tocar la fila entera, se suma 1 si se puede
+                              if (option.is_available && canAdd) {
+                                handleQuantityChange(group, option, 1);
+                              }
+                            }}
+                            className={`flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer hover:border-[#4A3B32]/30 active:scale-[0.98]
                               ${!option.is_available ? 'opacity-50 grayscale cursor-not-allowed bg-[#4A3B32]/5' : ''}
                               ${isSelected ? 'border-[#D4A373] bg-[#D4A373]/10' : 'border-[#4A3B32]/10 bg-[#FAF7F2]/40'}`}
                           >
                             <div className="flex items-center gap-3">
-                              <span className={`font-medium text-sm ${isSelected ? 'text-[#4A3B32] font-bold' : 'text-[#4A3B32]/80'}`}>
-                                {option.name}
+                              <span className={`font-medium text-sm ${isSelected ? 'text-[#4A3B32] font-black' : 'text-[#4A3B32]/80 font-bold'}`}>
+                                {option.name} {optQty > 0 && <span className="text-[#D4A373] ml-1">x{optQty}</span>}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -257,10 +265,10 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
                                 <span className="text-xs font-bold text-[#4A3B32]/50 mr-2">+${formatPrice(Number(option.price))}</span>
                               )}
                               {option.is_available && (
-                                <div className="flex items-center bg-white border border-[#4A3B32]/20 rounded-lg overflow-hidden">
+                                <div className="flex items-center bg-white border border-[#4A3B32]/20 rounded-lg overflow-hidden shrink-0" onClick={e => e.stopPropagation()}>
                                   <button
                                     type="button"
-                                    onClick={() => handleQuantityChange(group, option, -1)}
+                                    onClick={(e) => { e.stopPropagation(); handleQuantityChange(group, option, -1) }}
                                     disabled={optQty === 0}
                                     className="w-8 h-8 flex items-center justify-center text-[#4A3B32]/70 hover:bg-[#4A3B32]/5 transition disabled:opacity-30"
                                   >
@@ -271,7 +279,7 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
                                   </span>
                                   <button
                                     type="button"
-                                    onClick={() => handleQuantityChange(group, option, 1)}
+                                    onClick={(e) => { e.stopPropagation(); handleQuantityChange(group, option, 1) }}
                                     disabled={!canAdd}
                                     className="w-8 h-8 flex items-center justify-center text-[#4A3B32]/70 hover:bg-[#4A3B32]/5 transition disabled:opacity-30"
                                   >

@@ -28,6 +28,8 @@ export const metadata = {
   },
 }
 
+import { Analytics } from '@vercel/analytics/react';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -42,6 +44,8 @@ export default function RootLayout({
         <CartProvider>
             {children}
         </CartProvider>
+        {/* Añadimos Analytics para Vercel */}
+        <Analytics />
       </body>
     </html>
   );

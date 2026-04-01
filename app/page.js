@@ -292,13 +292,14 @@ export default function Home() {
                     })}
                   </div>
 
-                  <div className="overflow-hidden relative bg-white flex justify-center items-center">
+                  {/* Contenedor de la Imagen con Aspect Ratio 4:3 para mantener un tamaño uniforme y elegante */}
+                  <div className="aspect-[4/3] overflow-hidden relative bg-white flex justify-center items-center p-4">
                     {product.image_url ? (
-                      <img src={product.image_url} alt={product.name} className="w-full h-auto max-h-[300px] object-contain group-hover:scale-105 transition-transform duration-500" />
+                      <img src={product.image_url} alt={product.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
                     ) : (
-                      <div className="w-full aspect-square bg-[#4A3B32]/5 flex items-center justify-center text-4xl">🍩</div>
+                      <div className="w-full h-full bg-[#4A3B32]/5 flex items-center justify-center text-4xl rounded-xl">🍩</div>
                     )}
-                    <div className="absolute bottom-2 right-2 bg-[#4A3B32]/90 backdrop-blur text-[#FAF7F2] px-3 py-1 rounded-lg font-bold border border-[#4A3B32]">${product.price}</div>
+                    <div className="absolute bottom-2 right-2 bg-[#4A3B32]/90 backdrop-blur text-[#FAF7F2] px-3 py-1 rounded-lg font-bold border border-[#4A3B32] shadow-sm">${product.price}</div>
                   </div>
                   <div className="p-4">
                     <h3 className="text-2xl font-serif text-[#4A3B32] mb-1 leading-tight">{product.name}</h3>
