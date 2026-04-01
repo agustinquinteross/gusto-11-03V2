@@ -161,20 +161,20 @@ export default function ProductModal({ product, isOpen, onClose, onAddToCart }) 
       <div className="bg-white w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg rounded-none sm:rounded-3xl overflow-hidden shadow-2xl flex flex-col border sm:border-[#4A3B32]/10 text-[#4A3B32]/90">
 
         {/* Imagen Header */}
-        <div className="relative min-h-[200px] bg-[#4A3B32]/5 shrink-0 flex justify-center items-center">
+        <div className="relative w-full aspect-[4/3] sm:aspect-[16/9] bg-[#FAF7F2] shrink-0 flex justify-center items-center border-b border-[#4A3B32]/10 overflow-hidden">
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-auto max-h-[40vh] object-contain bg-white" />
+            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full min-h-[200px] flex items-center justify-center bg-[#4A3B32]/5 text-[#4A3B32]/50">🍩</div>
+            <div className="w-24 h-24 bg-white flex items-center justify-center text-5xl rounded-3xl shadow-sm border border-[#4A3B32]/10 text-[#4A3B32]/20">🍩</div>
           )}
+          
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 bg-[#FAF7F2]/60 hover:bg-[#FAF7F2]/80 text-[#4A3B32] p-2 rounded-full transition border border-[#4A3B32]/20"
+            className="absolute top-4 right-4 sm:top-6 sm:right-6 w-10 h-10 rounded-full bg-white/90 backdrop-blur shadow-md flex items-center justify-center text-[#4A3B32] hover:bg-[#4A3B32] hover:text-[#FAF7F2] transition-colors border border-[#4A3B32]/10 z-10"
           >
             <X size={20} />
           </button>
-          <div className="absolute bottom-0 w-full h-20 bg-gradient-to-t from-gray-900 to-transparent"></div>
         </div>
 
         {/* Scroll Content */}
