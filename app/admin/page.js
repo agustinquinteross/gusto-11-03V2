@@ -232,7 +232,7 @@ export default function AdminPage() {
     iframe.style.position = 'absolute'; iframe.style.width = '0px'; iframe.style.height = '0px'; iframe.style.border = 'none';
     document.body.appendChild(iframe);
 
-    const date = new Date(order.created_at).toLocaleString('es-AR');
+    const date = new Date(order.created_at).toLocaleString('es-AR', { hour12: false });
     const doc = iframe.contentWindow.document;
 
     doc.open();
@@ -273,6 +273,7 @@ export default function AdminPage() {
             <p><span class="bold">Tel:</span> ${order.customer_phone}</p>
             ${order.delivery_method === 'delivery' ? `<p><span class="bold">Dirección:</span> ${order.customer_address}</p>` : ''}
             <p><span class="bold">Pago:</span> ${order.payment_method ? order.payment_method.toUpperCase() : 'EFECTIVO'}</p>
+            ${order.scheduled_date ? `<p style="background:#000; color:#fff; padding:4px; margin-top:5px; text-align:center;"><span class="bold">📅 PROGRAMADO PARA:</span><br/>${new Date(order.scheduled_date).toLocaleString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/^\w/, (c) => c.toUpperCase())}</p>` : ''}
           </div>
           <table><thead><tr><th class="col-qty">Cnt</th><th class="col-prod">Producto</th><th class="col-price">Total</th></tr></thead><tbody>
             ${order.order_items.map(item => `<tr><td class="col-qty">${item.quantity}</td><td class="col-prod"><div class="bold">${item.product_name}</div>${item.options ? `<span class="extras">+ ${item.options}</span>` : ''}${item.note ? `<span class="note">NOTA: ${item.note}</span>` : ''}</td><td class="col-price">$${item.price * item.quantity}</td></tr>`).join('')}
@@ -441,9 +442,16 @@ export default function AdminPage() {
           <div className="flex justify-between items-start border-b border-[#4A3B32]/10 pb-2 pointer-events-none">
              <div className="flex items-center gap-2"><GripVertical size={16} className="text-[#4A3B32]/50 group-hover:text-[#4A3B32]/70 transition-colors"/><div><span className="font-black text-[#4A3B32] text-lg">#{order.id}</span><p className="text-xs text-[#4A3B32]/70 font-bold uppercase truncate max-w-[120px]">{order.customer_name}</p></div></div>
               <div className="flex flex-col items-end gap-1 pointer-events-auto">
+                {order.scheduled_date && (
+                    <div className="bg-orange-500 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-sm flex items-center gap-1 animate-pulse mb-1">
+                        <Clock size={10} /> 
+                        {new Date(order.scheduled_date).toLocaleString('es-AR', { weekday: 'long', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).replace(/^\w/, (c) => c.toUpperCase())}
+                    </div>
+                )}
                 <div className="flex gap-1">
                   <button onClick={() => deleteOrder(order.id)} className="p-1.5 bg-red-50 hover:bg-red-100 text-red-500 rounded transition mb-1" title="Eliminar"><Trash2 size={14} /></button>
                   <button onClick={() => printOrder(order)} className="p-1.5 bg-[#4A3B32]/5 hover:bg-[#4A3B32]/10 text-[#4A3B32]/70 hover:text-[#4A3B32] rounded transition mb-1" title="Imprimir"><Printer size={14} /></button>
+                  <a href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" className="p-1.5 bg-green-50 hover:bg-green-100 text-green-600 rounded transition mb-1" title="Contactar WhatsApp"><MessageCircle size={14} /></a>
                 </div>
                 <div className="flex items-center gap-1.5"><span className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wide ${order.delivery_method === 'delivery' ? 'bg-[#4A3B32] text-[#FAF7F2] shadow-sm' : 'bg-white text-[#4A3B32] border border-[#4A3B32]/30 shadow-sm'}`}>{order.delivery_method === 'delivery' ? 'Delivery' : 'Retiro'}</span>{order.status !== 'completed' && (<button onClick={(e) => { e.stopPropagation(); advanceOrderStatus(order) }} className={`text-[10px] px-2 py-0.5 rounded font-black uppercase tracking-wide transition-all active:scale-95 flex items-center gap-1 ${
               order.status === 'pending' ? 'bg-red-500 text-white' :

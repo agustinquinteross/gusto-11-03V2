@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useCart } from '../store/useCart'
 import { supabase } from '../lib/supabase'
-import { X, Loader2, MapPin, Store, Search, Trash2, Ticket, CreditCard, MessageCircle, Wallet, Gift, ChevronDown } from 'lucide-react'
+import { X, Loader2, MapPin, Store, Search, Trash2, Ticket, CreditCard, MessageCircle, Wallet, Gift, ChevronDown, Clock, AlertCircle } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 const MapPicker = dynamic(() => import('./MapPicker'), { ssr: false, loading: () => <div className="h-40 bg-[#4A3B32]/5 animate-pulse rounded-xl"/> })
@@ -27,6 +27,8 @@ export default function CartModal({ isOpen, onClose }) {
   const [deliveryType, setDeliveryType] = useState('delivery')
   const [address, setAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState('efectivo')
+  const [isScheduled, setIsScheduled] = useState(false)
+  const [scheduledDate, setScheduledDate] = useState('')
   
   const [config, setConfig] = useState({
     whatsapp_number: '5493834968345',
@@ -201,7 +203,8 @@ export default function CartModal({ isOpen, onClose }) {
         delivery_method: deliveryType,
         payment_method: paymentMethod,
         discount: discountAmount + promoSavings, 
-        coupon_code: couponCode || null
+        coupon_code: couponCode || null,
+        scheduled_date: isScheduled ? scheduledDate : null
       }).select().single()
 
     if (error) { alert('Error al guardar: ' + error.message); setLoading(false); return }
@@ -248,10 +251,22 @@ export default function CartModal({ isOpen, onClose }) {
         msg += `%0A🛵 *ENVÍO A DOMICILIO*`
         msg += `%0A📏 Distancia: *${distanceKm.toFixed(1)} KM*` 
         msg += `%0A📍 Dir: *${address}*`
-        // ✅ FIX: Agregamos un salto de línea después del link para que el paréntesis no se pegue
         if (mapLink) msg += `%0A📍 GPS: ${mapLink}%0A`
     } else { 
         msg += `%0A🏪 *RETIRO EN LOCAL*%0A` 
+    }
+
+    if (isScheduled && scheduledDate) {
+        const formattedDate = new Date(scheduledDate).toLocaleString('es-AR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace(/^\w/, (c) => c.toUpperCase());
+        msg += `%0A📅 *PEDIDO PROGRAMADO*`
+        msg += `%0A🕒 Fecha/Hora: *${formattedDate} hs*%0A`
     }
 
     msg += `%0A${itemsList}%0A%0A`
@@ -376,6 +391,39 @@ export default function CartModal({ isOpen, onClose }) {
                 <option value="efectivo">💵 Efectivo</option>
                 <option value="transferencia">🏦 Transferencia</option>
             </select>
+
+            {/* OPCIÓN DE PROGRAMAR PEDIDO */}
+            <div className="pt-2">
+                <label className="flex items-center gap-2 cursor-pointer group mb-2">
+                    <input 
+                        type="checkbox" 
+                        className="w-5 h-5 rounded-lg border-[#4A3B32]/20 text-[#4A3B32] focus:ring-[#4A3B32] transition-all cursor-pointer" 
+                        checked={isScheduled}
+                        onChange={(e) => setIsScheduled(e.target.checked)}
+                    />
+                    <span className="text-sm font-bold text-[#4A3B32]/80 group-hover:text-[#4A3B32] transition-colors flex items-center gap-1.5">
+                        <Clock size={16} className={isScheduled ? 'text-orange-500' : 'text-[#4A3B32]/60'} /> 
+                        ¿Querés programar tu pedido?
+                    </span>
+                </label>
+
+                {isScheduled && (
+                    <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                        <p className="text-[10px] text-[#4A3B32]/60 font-bold uppercase tracking-widest mb-1.5 ml-1">Elegí fecha y hora de entrega</p>
+                        <input 
+                            type="datetime-local" 
+                            className="w-full p-3 bg-orange-50 border border-orange-200 rounded-xl text-[#4A3B32] font-medium outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-100 transition-all"
+                            value={scheduledDate}
+                            min={new Date().toISOString().slice(0, 16)}
+                            onChange={(e) => setScheduledDate(e.target.value)}
+                            required={isScheduled}
+                        />
+                        <p className="text-[10px] text-orange-600 italic mt-1.5 ml-1 flex items-center gap-1">
+                            <AlertCircle size={10} /> Sujeto a disponibilidad y horarios del local.
+                        </p>
+                    </div>
+                )}
+            </div>
         </div>
 
         {/* RESUMEN DE TOTALES */}
@@ -387,8 +435,12 @@ export default function CartModal({ isOpen, onClose }) {
             <div className="flex justify-between text-2xl font-black text-[#4A3B32] pt-2 mb-4"><span>Total</span><span className="text-[#4A3B32]">${total}</span></div>
             
             <div className="space-y-3">
-                <button onClick={handleCheckout} disabled={loading || cart.length === 0 || (deliveryType === 'delivery' && !coords)} className="w-full bg-green-600 text-[#4A3B32] py-4 rounded-xl font-black flex justify-center items-center gap-2 hover:bg-green-500 disabled:opacity-50 shadow-lg shadow-green-900/20 transition-all uppercase tracking-widest text-sm">
-                    {loading ? <Loader2 className="animate-spin"/> : <><MessageCircle size={20}/> Enviar Pedido</>}
+                <button 
+                    onClick={handleCheckout} 
+                    disabled={loading || cart.length === 0 || (deliveryType === 'delivery' && !coords) || (isScheduled && !scheduledDate)} 
+                    className="w-full bg-green-600 text-[#4A3B32] py-4 rounded-xl font-black flex justify-center items-center gap-2 hover:bg-green-500 disabled:opacity-50 shadow-lg shadow-green-900/20 transition-all uppercase tracking-widest text-sm"
+                >
+                    {loading ? <Loader2 className="animate-spin"/> : <><MessageCircle size={20}/> {isScheduled ? 'Programar Pedido' : 'Enviar Pedido'}</>}
                 </button>
             </div>
         </div>
